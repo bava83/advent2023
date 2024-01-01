@@ -1,6 +1,6 @@
-#Advent of Code 2023
+# Advent of Code 2023
 
-##useage: 
+## useage: 
 Go into the day directory, and use command
 `go run .` 
 
