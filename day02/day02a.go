@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	_ "fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -25,17 +24,19 @@ func day02(){
     g := gameSet{valid: false}
     g.parseGameInput(s)
     g.setValid()
+    g.setPower()
     games = append(games, g)
   }
 
   day02aSum := sumValidID(games) 
-  fmt.Printf("Sum of the valid ids: %d",day02aSum)
+  fmt.Printf("Sum of the valid ids: %d \n",day02aSum)
   
-  day02bSum := 0
+  day02bSum := sumPower(games)
+  fmt.Printf("Sum of the powers: %d \n", day02bSum)
 
 }
 
-//find the sum of all valid games id
+//find the sum of all valid games id for day02a
 func sumValidID(games []gameSet) int{
   result := 0
   for _,g := range games{
@@ -46,12 +47,13 @@ func sumValidID(games []gameSet) int{
   return result
 }
 
-
-func sumMinPower(game []gameSet) int{
+//find teh sum of all power for day02b 
+func sumPower(games []gameSet) int{
   result := 0
   for _,g := range games{
-
+    result += g.power
   }
+  return result
 } 
 
 
@@ -60,6 +62,7 @@ type gameSet struct {
   id int
   drawList []Draw
   valid bool
+  power int
 }
 
 type Draw struct{
@@ -124,8 +127,17 @@ func (g *gameSet) setValid(){
 
 func (g *gameSet) setPower(){
   //copy one set of the values to minimum first
-  minDraw := g.drawList[0]
+  maxDraw := Draw{} 
   for _, draws := range g.drawList{
-    if draws.red 
+    if draws.red > maxDraw.red {
+      maxDraw.red = draws.red
+    }
+    if draws.green > maxDraw.green {
+      maxDraw.green = draws.green
+    }
+    if draws.blue > maxDraw.blue {
+      maxDraw.blue = draws.blue
+    }
   }
+  g.power = maxDraw.blue * maxDraw.green * maxDraw.red
 }
