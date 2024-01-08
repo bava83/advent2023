@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func main(){
@@ -18,15 +19,17 @@ func main(){
 
 func day04a(list []Card)int{
   sum := 0
+  wg := sync.WaitGroup{}
   for _, c := range list{
-    c.findWinning()
+    wg.Add(1)
+    go c.findWinning(&wg)
+    wg.Wait()
     c.calPoints()
     sum += c.winPoint 
   }
+
   return sum
 }
-
-
 
 type Card struct{
   winNum []int
@@ -74,22 +77,27 @@ func entry2Int(str []string)[]int{
 }
 
 //find how many winning numbers
-func (c *Card)findWinning() {
+func (c *Card)findWinning(wg *sync.WaitGroup) {
   c.winCount = 0
+  ch := make (chan bool)
   for _, wn := range c.winNum{
-    if containWinnings(c.ownNum, wn){
+    go containWinnings(c.ownNum, wn, ch)
+    if <- ch{
       c.winCount++
     } 
   }
+  defer wg.Done()
 }
 
-func containWinnings(list []int, target int) bool{
+func containWinnings(list []int, target int, ch chan bool){
+  result := false 
   for _, v := range list{
     if target == v{
-      return true
+      result = true
+      break
     }
-  }
-  return false
+  } 
+  ch <- result
 }
 
 func (c *Card) calPoints(){
