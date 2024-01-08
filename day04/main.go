@@ -15,27 +15,39 @@ func main(){
   filePath := "./input.txt"
   listCard := readFileToCard(filePath)
   fmt.Printf("Day04a total points:%d\n",day04a(listCard))
+  fmt.Printf("Day04b total cards:%d\n",day04b(listCard))
 }
 
 func day04a(list []Card)int{
   sum := 0
   wg := sync.WaitGroup{}
-  for _, c := range list{
+  for x:=0; x<len(list); x++{
     wg.Add(1)
-    go c.findWinning(&wg)
+    go list[x].findWinning(&wg)
     wg.Wait()
-    c.calPoints()
-    sum += c.winPoint 
+    list[x].calPoints()
+    sum += list[x].winPoint 
   }
-
   return sum
 }
+
+func day04b(list []Card)int{
+  result := 0
+  setCopies(list)
+  for _,c := range list{
+    result += c.copies
+  }
+  return result
+}
+
+
 
 type Card struct{
   winNum []int
   ownNum []int
-  winCount int
+  matchCount int
   winPoint int
+  copies int 
 }
 
 func readFileToCard(filePath string) []Card{
@@ -56,7 +68,8 @@ func readFileToCard(filePath string) []Card{
     winString := strings.Fields(entryString[0])
     numString := strings.Fields(entryString[1])
 
-    var c Card
+    c := Card{copies: 1}
+    // var c Card
     c.winNum = entry2Int(winString)
     c.ownNum = entry2Int(numString)
     cardList = append(cardList, c)
@@ -78,12 +91,12 @@ func entry2Int(str []string)[]int{
 
 //find how many winning numbers
 func (c *Card)findWinning(wg *sync.WaitGroup) {
-  c.winCount = 0
+  c.matchCount = 0
   ch := make (chan bool)
   for _, wn := range c.winNum{
     go containWinnings(c.ownNum, wn, ch)
     if <- ch{
-      c.winCount++
+      c.matchCount++
     } 
   }
   defer wg.Done()
@@ -101,8 +114,18 @@ func containWinnings(list []int, target int, ch chan bool){
 }
 
 func (c *Card) calPoints(){
-  if c.winCount == 0{
+  if c.matchCount == 0{
     c.winPoint = 0
   }
-  c.winPoint = int(math.Pow(2, float64(c.winCount-1)))
+  c.winPoint = int(math.Pow(2, float64(c.matchCount-1)))
+}
+
+func setCopies(list []Card){
+  for i, c := range list{
+    for x:=0; x<c.matchCount; x++{
+      for y:=0; y<c.copies; y++{
+        list[i+x+1].copies++
+      }
+    }    
+  }
 }
