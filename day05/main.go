@@ -13,6 +13,7 @@ func main(){
   filePath := "./input.txt"
   seedData :=readFileToSeed(filePath)
   day05a(seedData)
+  day05b(seedData)
 }
 
 func readFileToSeed(filePath string) *seedDataContainer{
@@ -108,23 +109,28 @@ func parseSeeds(s string)[]int64{
 func day05a(seedData *seedDataContainer){
   var locationList []int64
   for _, s := range seedData.seeds{ 
-    r := traceMap(traceMap(traceMap(traceMap(traceMap(traceMap(
-      traceMap(s, &seedData.seed2soil),
+    r := seedData.findLocation(s) 
+    locationList = append(locationList, r)
+  } 
+  fmt.Println(searchLowestLocation(&locationList))
+}
+
+//given a seed, find it's location
+func (seedData *seedDataContainer) findLocation(seed int64)int64{
+  return traceMap(traceMap(traceMap(traceMap(traceMap(traceMap(
+      traceMap(seed, &seedData.seed2soil),
         &seedData.soil2fert), 
         &seedData.fert2water),
         &seedData.water2light),
         &seedData.light2temp),
         &seedData.temp2humid),
         &seedData.humid2location)
-    locationList = append(locationList, r)
-  } 
-  fmt.Println(searchLowest(&locationList))
 }
 
 func traceMap(preNum int64,m *[]mapper)int64{ 
   result := preNum
   for _,v := range (*m){
-    if preNum > v.source && preNum < v.source+v.length{
+    if preNum >= v.source && preNum < v.source+v.length{
       result = v.destination + (preNum-v.source)
       break
     }
@@ -132,7 +138,22 @@ func traceMap(preNum int64,m *[]mapper)int64{
   return result
 }
 
-func searchLowest(locationList *[]int64) int64{
+/* func printSeed2Soil(seedData *seedDataContainer){
+  for i:=0; i<100; i++{
+    l := traceMap(int64(i),&seedData.seed2soil)
+    fmt.Printf("seed: %d, soil: %d\n", i, l)
+  }
+} */
+
+/* func debugMap(seedData *seedDataContainer){
+  var i int64
+  for ; i<100; i++{
+    l := seedData.findLocation(i)
+    fmt.Printf("seed: %d, soil: %d\n",i,l)
+  }
+} */
+
+func searchLowestLocation(locationList *[]int64) int64{
   result := (*locationList)[0] 
   for _, value := range (*locationList){
     if value < result{
@@ -140,4 +161,41 @@ func searchLowest(locationList *[]int64) int64{
     }
   }
   return result 
+}
+
+type seedRange struct{
+  start int64
+  length int64
+}
+
+func day05b(seedData *seedDataContainer){
+  seedList := calSeedRange(seedData.seeds)    
+  min := seedData.findLocation(seedList[0].start)  
+  for _,s := range seedList{
+    temp := findSmallestLocation(s,seedData)
+    if temp < min {
+      min = temp
+    }
+  } 
+  fmt.Println(min)
+}
+
+func findSmallestLocation(seeds seedRange, seedData *seedDataContainer) int64{
+  min := seedData.findLocation(seeds.start)
+  for i:=seeds.start; i<seeds.start+seeds.length; i++{
+    temp := seedData.findLocation(i)
+    if temp < min {
+      min = temp
+    }
+  }
+  return min
+}
+
+func calSeedRange(l []int64)[]seedRange{
+  var seed []seedRange
+  for i:=0; i<len(l); i+=2{
+    s := seedRange{start: l[i], length: l[i+1] }
+    seed = append(seed, s)
+  }
+  return seed
 }
