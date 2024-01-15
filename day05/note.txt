@@ -1,0 +1,3 @@
+part5b can rewrite smarter.
+doesn't have to check every entries, can just check the minimum of the range of seeds
+since the entire block will result with the same minimum destination
