@@ -14,7 +14,7 @@ func main(){
 //  filePath := "./input02.txt"
   filePath := "./input.txt"
   cards := readFile(filePath)
-  day07a(cards)
+  day07b(cards)
 }
 
 func readFile(filePath string) []cardBit{
@@ -44,12 +44,11 @@ type cardBit struct{
   t handType
 }
 type cardListByHand []cardBit 
-//for handling part02
-type cardListByHand02 []cardBit
 
 const (
   T = 10
-  J = 11
+  //set J to the lowest
+  J = 1
   Q = 12
   K = 13
   A = 14
@@ -118,13 +117,22 @@ func initHandsType(cards []cardBit){
 
 func (cards *cardBit) setHandType(){
   h := make(map[int]int)
+  jAmount := 0
   for _, card := range cards.hand{
-    if _,ok := h[card]; ok{
-      h[card]++
+    if card == J{
+      jAmount++
     }else{
-      h[card]=1
+      if _,ok := h[card]; ok{
+        h[card]++
+      }else{
+        h[card]=1
+      }
     }
   }
+  //add J back to the highest
+  r := mostRepeat(h)
+  h[r]+=jAmount
+
   threeCard := false  
   twoCard := false
   //default to high card
@@ -158,6 +166,19 @@ func (cards *cardBit) setHandType(){
   }
 }
 
+func mostRepeat(h map[int]int) int{
+  highestValue := 0
+  highestKey := 0
+  for k,v := range h{
+    if v > highestValue{
+      highestValue = v
+      highestKey = k 
+    }
+  }
+  return highestKey
+}
+
+
 func (hand01 *cardBit) strongerHand (hand02 *cardBit)bool{
   if hand01.t > hand02.t{
     return true
@@ -187,7 +208,7 @@ func (a cardListByHand) Less(i,j int) bool{
   return !a[i].strongerHand(&a[j])
 }
 
-func day07a(cards cardListByHand){
+func day07b(cards cardListByHand){
   initHandsType(cards)
   sort.Sort(cardListByHand(cards))
   result := calPoints(cards)

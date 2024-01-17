@@ -44,8 +44,6 @@ type cardBit struct{
   t handType
 }
 type cardListByHand []cardBit 
-//for handling part02
-type cardListByHand02 []cardBit
 
 const (
   T = 10
