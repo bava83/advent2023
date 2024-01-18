@@ -13,6 +13,8 @@ func main(){
   command, m := readFile(filePath)
   r := day08a(command, m)
   fmt.Printf("It takes %d steps to reach ZZZ.\n",r)
+  r02 := day08b(command,m)
+  fmt.Printf("It takes %d steps to reach __Z.\n",r02)
 }
 
 func readFile(filePath string) (string, map[string]node){
@@ -51,11 +53,20 @@ type node struct{
 
 
 func day08a(command string, m map[string]node) int{
-  instruction := "AAA"
+  return findSteps(command, m, "AAA", checkMatch)
+}
+
+type checkerFunction func(string) bool
+func checkMatch(s string)bool{
+  return s=="ZZZ" 
+}
+
+func findSteps(command string, m map[string]node, start string, checker checkerFunction) int{
+  instruction := start
   steps := 0
   for {
     for _, c := range command{
-      if instruction == "ZZZ"{
+      if checker(instruction){
         return steps 
       }
       switch c{
@@ -68,3 +79,69 @@ func day08a(command string, m map[string]node) int{
     } 
   }
 }
+
+type nodeSteps struct{
+  node string
+  steps int
+}
+
+func day08b(command string, m map[string]node)int{
+  checkList := searchStartingNodes(m)
+  commonSteps := 0
+  var listSteps []int
+  for i := range checkList{
+    checkList[i].steps = findSteps(command, m, checkList[i].node, checkEnd)
+    listSteps = append(listSteps, checkList[i].steps)
+  }
+  commonSteps = LCM(listSteps[0], listSteps[1], listSteps[2:]...)
+  
+  return commonSteps
+}
+
+//check if string match with __Z
+func checkEnd(s string)bool{
+  return s[len(s)-1] == 'Z'
+}
+
+/* func checkEndWithZ(l []string) bool{
+  for _, s := range l{
+    if s[len(s)-1] != 'Z'{
+      return false
+    }
+  }
+  return true
+} */
+
+//find the list that starts with __A 
+func searchStartingNodes(m map[string]node)[]nodeSteps{
+  var list []nodeSteps
+  for k := range m{
+    if k[len(k)-1] == 'A'{
+      c := nodeSteps{node: k, steps: 0}
+      list = append(list, c)
+    }
+  }
+  return list
+}
+
+// greatest common divisor (GCD) via Euclidean algorithm
+func GCD(a, b int) int {
+      for b != 0 {
+              t := b
+              b = a % b
+              a = t
+      }
+      return a
+}
+
+// find Least Common Multiple (LCM) via GCD
+func LCM(a, b int, integers ...int) int {
+      result := a * b / GCD(a, b)
+
+      for i := 0; i < len(integers); i++ {
+              result = LCM(result, integers[i])
+      }
+
+      return result
+}
+
