@@ -12,7 +12,11 @@ func main(){
 //  filePath := "./input02.txt"
   filePath := "./input.txt"
   list := readInput(filePath)
-  day09a(list)
+  
+  r := day09a(list)
+  fmt.Printf("The sum of next steps: %d \n",r)
+  r02 := day09b(list)
+  fmt.Printf("The sum of previous steps: %d \n",r02)
 }
 
 func readInput(filePath string)[][]int{
@@ -41,14 +45,13 @@ func readInput(filePath string)[][]int{
   return steps
 }
 
-func day09a(list [][]int){
+func day09a(list [][]int)int{
   r := 0
   for _, steps := range list{
     r += predictNext(steps)
   }
-  fmt.Println(r)
+  return r
 }
-
 
 func predictNext(steps []int)int{
   if checkFinish(steps){
@@ -62,8 +65,6 @@ func predictNext(steps []int)int{
   return r+steps[len(steps)-1]
 }
 
-
-
 func checkFinish(steps []int)bool{
   for _,v := range steps{
     if v != steps[0]{
@@ -71,4 +72,24 @@ func checkFinish(steps []int)bool{
     }
   }
   return true
+}
+
+func predictPrev(steps []int) int{
+  if checkFinish(steps){
+    return steps[0]
+  }
+  var n []int 
+  for i:= 0; i<len(steps)-1; i++{
+    n = append(n, steps[i+1]-steps[i])
+  }
+  r := predictPrev(n)
+  return steps[0]-r
+}
+
+func day09b(list [][]int)int {
+  result := 0
+  for _,steps := range list{
+    result += predictPrev(steps)
+  }
+  return result
 }
