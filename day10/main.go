@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 )
 
@@ -12,6 +13,7 @@ func main(){
   filePath := "./input.txt"
   maze := readData(filePath) 
   day10a(maze)
+  day10b(maze)
 }
 
 func readData(filePath string)[]string{
@@ -82,6 +84,7 @@ func atStart(current point, maze []string)bool{
 }
 
 //scan surrounding to see where can move next 
+//didn't do boundary check
 func findStartNext(start point, maze []string)point{
   n := maze[start.y-1][start.x]
   if (n == NSPipe || n == SWPipe || n == SEPipe){
@@ -170,3 +173,27 @@ func recurPath(prev, current point, maze []string, path []point)[]point{
   next := nextPosition(prev, current, maze)
   return recurPath(current, next, maze, path)
 }
+
+func day10b(maze []string){
+  path := calPath(maze)
+  area := shoelaceAlgorithm(path)
+  i := picksAlgorithm(area,path)
+  fmt.Printf("The interior is %d\n",i)
+}
+
+func shoelaceAlgorithm(path []point)int{
+  path = append(path, path[0])
+  x:=0
+  y:=0
+  for i:=0; i<len(path)-1; i++{
+    x += path[i].x * path[i+1].y
+    y += path[i].y * path[i+1].x
+  }
+  return int(math.Abs(float64(x)-float64(y)))/2
+}
+
+func picksAlgorithm(area int, path []point)int{
+  return ((area+1)-(len(path)/2))
+}
+
+
