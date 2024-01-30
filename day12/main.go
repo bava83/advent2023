@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	//filePath := "./input02.txt"
-  filePath := "./input.txt"
+	filePath := "./input02.txt"
+  //filePath := "./input.txt"
 	hs := readFile(filePath)
 	day12(hs)
 }
@@ -79,43 +79,30 @@ func validContinuous(record string, config []int) bool {
 }
 
 func handleRecord(record string, config []int) int {
-	if !checkValidRecord(record, config) {
-		return 0
-	}
+  if record == ""{
+    if len(config) == 0{
+      return 1
+    }
+    return 0
+  }
+  if len(config) == 0{
+    if strings.Contains(record, string(damaged)){
+      return 0
+    }
+    return 1
+  }
+
 	result := 0
-	//strip the leading working char
-	if record[0] == working {
-		if len(config) == 0 {
-			return 1
-		}
-		return handleRecord(record[1:], config)
-	}
-	if record[0] == damaged {
-		if validContinuous(record, config) {
-			if len(config) == 1 {
-				return 1
-			}
-			return handleRecord(record[config[0]+1:], config[1:])
-		}
-		return 0
-	}
-	if record[0] == unknown {
-		temp := 0
-		//asssume working
-		// fmt.Printf(".%s %v %d\n", record[1:], config, temp)
-		temp += handleRecord(record[1:], config)
-		// fmt.Println(temp)
-		//assume broken
-		if validContinuous(record, config) {
-			if len(config) == 1 {
-          return temp+1
-			}
-			// fmt.Printf("#%s %v %d\n", record[config[0]+1:], config[1:], temp)
-			temp += handleRecord(record[config[0]+1:], config[1:])
-			// fmt.Println(temp)
-		}
-		result += temp
-	}
+
+  if record[0] == working || record[0] == unknown{
+    result += handleRecord(record[1:], config)
+  }
+
+  if record[0] == damaged || record[0] == unknown{
+    if config[0] <= len(record) && !(strings.Contains(record[:config[0]],string(working))) && (config[0] == len(record) || record[config[0]] != damaged){
+      result += handleRecord(record[config[0]+1:], config[1:])
+    }
+  }
 	return result
 }
 
@@ -136,11 +123,15 @@ func getConfigSum(config []int) int {
 }
 
 func day12a(hs []hotSpring){
-  result := 0
+/*   result := 0
   for _, i := range hs{
     r := handleRecord(i.record, i.config)
    // fmt.Println(r)
     result += r
   }
-  fmt.Println(result)
+  fmt.Println(result) */
+  s01 := "???.###"
+  a01 := []int{1,1,3}
+  t := handleRecord(s01,a01)
+  fmt.Println(t)
 }
