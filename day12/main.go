@@ -8,148 +8,139 @@ import (
 	"strings"
 )
 
-func main(){
-//  filePath := "./input.txt"
-  filePath := "./input02.txt"
-  hs := readFile(filePath)
-  day12(hs)
+func main() {
+	//filePath := "./input02.txt"
+  filePath := "./input.txt"
+	hs := readFile(filePath)
+	day12(hs)
 }
 
-func readFile(filePath string)[]hotSpring{
-  readFile, err := os.Open(filePath)
-  if err!= nil{
-    panic(err)
-  }
-  defer readFile.Close()
+func readFile(filePath string) []hotSpring {
+	readFile, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer readFile.Close()
 
-  fileScanner := bufio.NewScanner(readFile)
-  fileScanner.Split(bufio.ScanLines)
+	fileScanner := bufio.NewScanner(readFile)
+	fileScanner.Split(bufio.ScanLines)
 
-  var list []hotSpring
-  for fileScanner.Scan(){
-    var hs hotSpring
-    l := strings.Split(fileScanner.Text(), " ")
-    hs.record = l[0]
-    c := strings.Split(l[1], ",")
-    for _, i := range c{
-      num, err := strconv.Atoi(i)
-      if err != nil{
-        panic(err)
-      }
-      hs.config = append(hs.config, num)
-    }
-    list = append(list, hs)
-  }
-  return list
+	var list []hotSpring
+	for fileScanner.Scan() {
+		var hs hotSpring
+		l := strings.Split(fileScanner.Text(), " ")
+		hs.record = l[0]
+		c := strings.Split(l[1], ",")
+		for _, i := range c {
+			num, err := strconv.Atoi(i)
+			if err != nil {
+				panic(err)
+			}
+			hs.config = append(hs.config, num)
+		}
+		list = append(list, hs)
+	}
+	return list
 }
 
-func day12(hs []hotSpring){
-  //testing
-  
-  r := []int{1,1,3}
-  s01 := handleRecords("???.###", r)
-  fmt.Println(s01)
-
-
+func day12(hs []hotSpring) {
+	//testing
+  day12a(hs)
 }
 
-type hotSpring struct{
-  record string
-  config []int
+type hotSpring struct {
+	record string
+	config []int
 }
 
 const (
-  damaged = '#'
-  working = '.'
-  unknown = '?'
+	damaged = '#'
+	working = '.'
+	unknown = '?'
 )
 
+func validContinuous(record string, config []int) bool {
+	if len(record) == 0 || config[0] > len(record) {
+		return false
+	}
 
-func handleRecords(record string, configs []int)int{
+	for i := 0; i < len(record) && i < config[0]; i++ {
+		if record[i] == working {
+			return false
+		}
+	}
+	//check what's after the damaged, cannot be damaged
+	if len(record) > config[0] {
+		if record[config[0]] == damaged {
+			return false
+		}
+	}
+	return true
+}
+
+func handleRecord(record string, config []int) int {
+	if !checkValidRecord(record, config) {
+		return 0
+	}
+	result := 0
+	//strip the leading working char
+	if record[0] == working {
+		if len(config) == 0 {
+			return 1
+		}
+		return handleRecord(record[1:], config)
+	}
+	if record[0] == damaged {
+		if validContinuous(record, config) {
+			if len(config) == 1 {
+				return 1
+			}
+			return handleRecord(record[config[0]+1:], config[1:])
+		}
+		return 0
+	}
+	if record[0] == unknown {
+		temp := 0
+		//asssume working
+		// fmt.Printf(".%s %v %d\n", record[1:], config, temp)
+		temp += handleRecord(record[1:], config)
+		// fmt.Println(temp)
+		//assume broken
+		if validContinuous(record, config) {
+			if len(config) == 1 {
+          return temp+1
+			}
+			// fmt.Printf("#%s %v %d\n", record[config[0]+1:], config[1:], temp)
+			temp += handleRecord(record[config[0]+1:], config[1:])
+			// fmt.Println(temp)
+		}
+		result += temp
+	}
+	return result
+}
+
+func checkValidRecord(record string, config []int) bool {
+	allConfigSum := getConfigSum(config)
+	if allConfigSum > len(record) {
+		return false
+	}
+	return true
+}
+
+func getConfigSum(config []int) int {
+	result := 0
+	for _, c := range config {
+		result += c
+	}
+	return result
+}
+
+func day12a(hs []hotSpring){
   result := 0
-  //strip the prefix that's working
-  if record[0] == working{
-    return handleRecords(record[1:], configs)
+  for _, i := range hs{
+    r := handleRecord(i.record, i.config)
+   // fmt.Println(r)
+    result += r
   }
-  var re []int
-  start := 0
-  for i:=0; i<len(configs)-1; i++{
-    temp := singlePattern(record[start:(start+configs[i])],configs[i])
-    start += configs[i]+1
-    re = append(re, temp)
-  }
-  temp := singlePattern(record[start:(start+configs[len(configs)-1])], configs[len(configs)-1])
-  re = append(re, temp)
-  fmt.Println(re)
-  return result
-}
-
-func singlePattern(record string, config int)int{
-  r := 0
-  if len(record)==0{
-    if config == 0{
-      return 1
-    }
-    return 0
-  }
-  if len(record)==1{
-    return handleBase(record,config)
-  }
-  //for case len > 1
-  switch record[0]{
-    case working:
-      return singlePattern(record[1:],config)
-    case damaged:
-      //wrong
-      return handleContinuous(record, config)
-    case unknown:
-      u := 0
-      //assume first char is working
-      u += singlePattern(record[1:], config)
-      //assume first char is damage 
-      u += handleContinuous(record, config)
-      r = u
-  }
-  return r
-}
-
-//handle when length is 1
-func handleBase(record string, config int)int{
-  switch record[0]{
-    case working:
-      if config == 0{
-        return 1
-      }
-      return 0
-    case damaged:
-      if config == 1{
-        return 1
-      } 
-      return 0
-    case unknown:
-      if config == 1 || config == 0{
-        return 1
-      }
-      return 0
-  }
-  return 0
-}
-
-func handleContinuous(record string, config int)int{
-  if len(record) == 0 || config > len(record){
-    return 0
-  }
-
-  for i:=0; i<len(record) && i<config; i++{
-    if record[i] == working{
-      return 0
-    } 
-  }
-  //check what's after the damaged, cannot be damaged
-  if len(record)> config{
-    if record[config] == damaged{
-      return 0
-    }
-  }
-  return 1
+  fmt.Println(result)
 }
