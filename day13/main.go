@@ -4,13 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main(){
-  //filePath := "./input.txt"
-  filePath := "./input02.txt"
+  filePath := "./input.txt"
+  //filePath := "./input02.txt"
   m := readData(filePath)
   day13a(m)
+  day13b(m)
 }
 
 func readData(filepath string)[][]string{
@@ -41,22 +43,25 @@ func readData(filepath string)[][]string{
 func findReflection(m [][]rune)int{
   result := 0
 //  v := 0
-  h, foundH := findPosition(m)
+  h, foundH := findMirrorPosition(m)
+  result += h*100
   if !foundH{
-    fmt.Println("didn't found horizontal mirror")
-    //transpost the matrix, 
-//    v := findVertical(m)
+    tm := transpost(m)
+    v, foundV := findMirrorPosition(tm)
+    if !foundV{
+      panic("found neither")
+    }
+    result += v
   }
-  fmt.Println(h)
   return result
 }
 
-func findPosition(m [][]rune)(int,bool){
-  result := 0
+func findMirrorPosition(m [][]rune)(int,bool){
   for i:= 0; i<len(m)-1; i++{
     if checkEqual(m[i],m[i+1]){
       flag := true
-      for j,k:=i,i+1; j>0 && k<len(m)-1 ; j,k = j-1,k+1{
+      //2 pointers, moving towards either end
+      for j,k:=i,i+1; j>=0 && k<len(m) ; j,k = j-1,k+1{
         if(!checkEqual(m[j],m[k])){
           flag = false
           break
@@ -67,16 +72,11 @@ func findPosition(m [][]rune)(int,bool){
       }
     }
   }
-  return result, false
+  return 0, false
 }
 
 func checkEqual(a []rune,b []rune)bool{
-  for i := range a{
-    if a[i] != b[i]{
-      return false
-    }
-  }
-  return true
+  return strings.Compare(string(a),string(b)) == 0
 }
 
 func convert2Rune(m []string)[][]rune{
@@ -92,8 +92,81 @@ func convert2Rune(m []string)[][]rune{
   return i
 }
 
+func transpost(m [][]rune)[][]rune{
+  y := len(m)
+  x := len(m[0])
+  var result [][]rune
+  for i:=0; i<x; i++{
+    temp := make([]rune, y)
+    result = append(result, temp)
+  }
+
+  for i:=0; i<len(m); i++{
+    for j:=0; j<len(m[i]); j++{
+      result[j][i]=m[i][j]
+    }
+  }
+  return result
+}
+
 func day13a(m [][]string){
-  ru := convert2Rune(m[1])
-  r := findReflection(ru)
-  fmt.Println(r)
+  result := 0
+  for i := range m{
+    matrix := convert2Rune(m[i])
+    result += findReflection(matrix)
+  }
+  fmt.Println(result)
+}
+
+func day13b(m [][]string){
+  result := 0
+  for i := range m{
+    matrix := convert2Rune(m[i])
+    result += findSmudgeReflect(matrix)
+  }
+  fmt.Println(result)
+} 
+
+func findSmudgeReflect(m [][]rune)int{
+  result := 0
+  h, foundH := findSmudgeMirrorPosition(m)
+  result = h*100
+  if !foundH{
+    tm := transpost(m)
+    v, foundV := findSmudgeMirrorPosition(tm)
+    if !foundV{
+      panic("Found neither.")
+    }
+    result += v
+  }
+  return result
+}
+
+func findSmudgeMirrorPosition(m [][]rune)(int,bool){
+  for i:= 0; i<len(m)-1; i++{
+    smudged := smudgedEqual(m[i],m[i+1], 0)
+    if smudged <= 1{
+      //2 pointers to loop through the list
+      for j,k:=i-1,i+2; j>=0 && k<len(m) ; j,k = j-1,k+1{ 
+        smudged = smudgedEqual(m[j],m[k],smudged)
+        // fmt.Println(i,j,k, smudged)
+        if smudged >1{
+          break
+        }
+      }
+      if smudged == 1{
+        return i+1, true
+      }
+    }
+  }
+  return 0, false
+}
+
+func smudgedEqual(a []rune, b []rune, smudged int)int{
+  for i := range a{
+    if a[i]!=b[i]{
+      smudged++
+    }
+  }
+  return smudged
 }
